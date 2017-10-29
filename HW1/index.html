@@ -1,0 +1,453 @@
+<html>
+
+<head>
+<title>ICG WebGL &mdash; HW1</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+
+
+
+<script id="0_fragmentShader" type="fragment">
+    //flat shading 
+    #extension GL_OES_standard_derivatives : enable
+
+    precision mediump float;
+    varying vec4 fragcolor;
+
+    uniform highp mat4 uNMatrix ;
+
+    varying vec3 mvP ; 
+
+
+    const vec3 AmbientLight = vec3(0.2, 0.2, 0.2);
+    const vec3 lightposition1 = vec3(-10.0, 4.0, 20.0) ;
+    const vec3 lightposition2 = vec3(10.0, -4.0, 20.0) ;
+    const vec3 directionalLightColor = vec3(1, 1, 1);
+    const vec3 DiffuseLight = vec3(0.8,0.8,0.8);
+    const vec3 SpecularLight = vec3(0.8,0.8,0.8);
+    float uMaterialShininess = 32.0;
+
+
+    void main(void) {
+        vec3 LightDirection1 = normalize(lightposition1-mvP) ;  //direction from light1 to vertex
+        vec3 LightDirection2 = normalize(lightposition2-mvP) ;  //direction from light2 to vertex
+
+        vec3 N = normalize(cross(dFdx(mvP), dFdy(mvP))) ;
+        //vec3 N = normalize((uNMatrix * vec4(planeNormal,1.0)).xyz) ; //
+
+        vec3 eyeDirection = -normalize(mvP) ;
+        vec3 reflectDirection1 = normalize(reflect(-LightDirection1, N)) ;  
+        vec3 reflectDirection2 = normalize(reflect(-LightDirection2, N)) ;  
+
+        float SpecularLightWeighting1 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
+        float DiffuseLightWeighting1 = max(dot(N, LightDirection1), 0.0) ;
+
+        float SpecularLightWeighting2 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
+        float DiffuseLightWeighting2 = max(dot(N, LightDirection2), 0.0) ;
+
+        vec3 LightWeight = AmbientLight + SpecularLight * SpecularLightWeighting1 + DiffuseLight * DiffuseLightWeighting1 + SpecularLight * SpecularLightWeighting2 + DiffuseLight * DiffuseLightWeighting2;
+
+        gl_FragColor = vec4(fragcolor.rgb*LightWeight, fragcolor.a);
+    }
+
+</script>
+
+<script id="0_vertexShader" type="vertex">
+    //flat shading 
+    attribute vec3 aVertexPosition;
+    attribute vec3 aFrontColor;
+    attribute vec3 aVertexNormal ;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    //uniform mat4 uNMatrix ;
+
+    varying vec4 fragcolor;
+    // varying vec3 VertexPosition ;
+    varying vec3 mvP ;
+
+    uniform sampler2D uSampler;
+
+
+    void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        // VertexPosition = aVertexPosition ;
+        mvP = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz ; // model view Position
+        fragcolor = vec4(aFrontColor.rgb, 1.0);
+
+    }
+</script>
+
+
+<script id="1_fragmentShader" type="fragment">
+    //garoud shading 
+    precision mediump float;
+    varying vec4 fragcolor;
+
+
+
+    void main(void) {
+        gl_FragColor = fragcolor ;
+    }
+
+</script>
+
+<script id="1_vertexShader" type="vertex">
+    //garoud shading 
+    //#extension GL_OES_standard_derivatives : enable
+
+    attribute vec3 aVertexPosition;
+    attribute vec3 aFrontColor;
+    attribute vec3 aVertexNormal ;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    //uniform mat4 uNMatrix ;
+
+    varying vec4 fragcolor;
+    // varying vec3 VertexPosition 
+    uniform sampler2D uSampler;
+
+    const vec3 AmbientLight = vec3(0.2, 0.2, 0.2);
+    const vec3 lightposition1 = vec3(-10.0, 4.0, 20.0) ;
+    const vec3 lightposition2 = vec3(10.0, -4.0, 20.0) ;
+    const vec3 directionalLightColor = vec3(1, 1, 1);
+    const vec3 DiffuseLight = vec3(0.8,0.8,0.8);
+    const vec3 SpecularLight = vec3(0.8,0.8,0.8);
+    float uMaterialShininess = 32.0;
+
+
+
+    void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        
+        vec3 mvP = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz ; // model view Position
+        vec3 LightDirection1 = normalize(lightposition1-mvP) ;  //direction from light1 to vertex
+        vec3 LightDirection2 = normalize(lightposition2-mvP) ;  //direction from light2 to vertex
+
+        vec3 N = normalize((uMVMatrix * vec4(aVertexNormal, 0.0)).xyz) ;
+
+        vec3 eyeDirection = -normalize(mvP) ;
+        vec3 reflectDirection1 = normalize(reflect(-LightDirection1, N)) ;  
+        vec3 reflectDirection2 = normalize(reflect(-LightDirection2, N)) ;  
+
+        float SpecularLightWeighting1 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
+        float DiffuseLightWeighting1 = max(dot(N, LightDirection1), 0.0) ;
+
+        float SpecularLightWeighting2 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
+        float DiffuseLightWeighting2 = max(dot(N, LightDirection2), 0.0) ;
+
+        vec3 LightWeight = AmbientLight + SpecularLight * SpecularLightWeighting1 + DiffuseLight * DiffuseLightWeighting1 + SpecularLight * SpecularLightWeighting2 + DiffuseLight * DiffuseLightWeighting2;
+
+        fragcolor = vec4(aFrontColor.rgb*LightWeight, 1.0);
+
+    }
+</script>
+
+<<script id="2_fragmentShader" type="fragment">
+    //phong shading 
+    #extension GL_OES_standard_derivatives : enable
+
+    precision mediump float;
+    varying vec4 fragcolor;
+    varying vec3 vertextNormal ;
+
+    //uniform highp mat4 uNMatrix ;
+
+    varying vec3 mvP ; 
+
+
+    const vec3 AmbientLight = vec3(0.2, 0.2, 0.2);
+    const vec3 lightposition1 = vec3(-10.0, 4.0, 20.0) ;
+    const vec3 lightposition2 = vec3(10.0, -4.0, 20.0) ;
+    const vec3 directionalLightColor = vec3(1, 1, 1);
+    const vec3 DiffuseLight = vec3(0.8,0.8,0.8);
+    const vec3 SpecularLight = vec3(0.8,0.8,0.8);
+    float uMaterialShininess = 32.0;
+
+
+    void main(void) {
+        vec3 LightDirection1 = normalize(lightposition1-mvP) ;  //direction from light1 to vertex
+        vec3 LightDirection2 = normalize(lightposition2-mvP) ;  //direction from light2 to vertex
+
+        vec3 N = normalize(vertextNormal) ;
+
+        vec3 eyeDirection = -normalize(mvP) ;
+        vec3 reflectDirection1 = normalize(reflect(-LightDirection1, N)) ;  
+        vec3 reflectDirection2 = normalize(reflect(-LightDirection2, N)) ;  
+
+        float SpecularLightWeighting1 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
+        float DiffuseLightWeighting1 = max(dot(N, LightDirection1), 0.0) ;
+
+        float SpecularLightWeighting2 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
+        float DiffuseLightWeighting2 = max(dot(N, LightDirection2), 0.0) ;
+
+        vec3 LightWeight = AmbientLight + SpecularLight * SpecularLightWeighting1 + DiffuseLight * DiffuseLightWeighting1 + SpecularLight * SpecularLightWeighting2 + DiffuseLight * DiffuseLightWeighting2;
+
+        gl_FragColor = vec4(fragcolor.rgb*LightWeight, fragcolor.a);
+    }
+
+</script>
+
+<script id="2_vertexShader" type="vertex">
+    //phong shading 
+    attribute vec3 aVertexPosition;
+    attribute vec3 aFrontColor;
+    attribute vec3 aVertexNormal ;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    //uniform mat4 uNMatrix ;
+
+    varying vec4 fragcolor;
+    varying vec3 vertextNormal ;
+    varying vec3 mvP ;
+
+    uniform sampler2D uSampler;
+
+
+    void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        vertextNormal = aVertexNormal ;
+        mvP = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz ; // model view Position
+        fragcolor = vec4(aFrontColor.rgb, 1.0);
+
+    }
+</script>
+<script type="text/javascript">
+
+    var gl;
+
+    function initGL(canvas) {
+        try {
+            gl = canvas.getContext("experimental-webgl");
+            gl.viewportWidth = canvas.width;
+            gl.viewportHeight = canvas.height;
+        } catch (e) {
+        }
+        if (!gl) {
+            alert("Could not initialise WebGL, sorry :-(");
+        }
+        if(!gl.getExtension('OES_standard_derivatives')) {
+                throw 'extension not support';
+        }
+    }
+
+
+    function getShader(gl, id) {
+        var shaderScript = document.getElementById(id);
+        if (!shaderScript) {
+            return null;
+        }
+
+        var str = "";
+        var k = shaderScript.firstChild;
+        while (k) {
+            if (k.nodeType == 3) {
+                str += k.textContent;
+            }
+            k = k.nextSibling;
+        }
+
+        var shader;
+        if (shaderScript.type == "fragment") {
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        } else if (shaderScript.type == "vertex") {
+            shader = gl.createShader(gl.VERTEX_SHADER);
+        } else {
+            return null;
+        }
+
+        gl.shaderSource(shader, str);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(shader));
+            return null;
+        }
+
+        return shader;
+    }
+
+
+    var shaderProgram;
+
+    function initShaders() {
+        var fragmentShader = getShader(gl, "2_fragmentShader");
+        var vertexShader = getShader(gl, "2_vertexShader");
+
+        shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert("Could not initialise shaders");
+        }
+
+        gl.useProgram(shaderProgram);
+
+        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+        shaderProgram.vertexFrontColorAttribute = gl.getAttribLocation(shaderProgram, "aFrontColor");
+        gl.enableVertexAttribArray(shaderProgram.vertexFrontColorAttribute);
+
+        shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal") ;
+        gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute) ;
+
+        // pointer, get the location 
+        shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+        shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+        shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+
+        shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix")
+    }
+
+
+    var mvMatrix = mat4.create();
+    var pMatrix = mat4.create();
+
+    //bind the value to the pointer 
+    function setMatrixUniforms() {
+        gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+
+        var normalMatrix = mat4.create() ;
+        mat4.inverse(normalMatrix, mvMatrix) ;
+        mat4.transpose(normalMatrix, normalMatrix)
+
+        gl.uniformMatrix4fv(shaderProgram.nMatrixUniform, false, normalMatrix);
+
+    }
+
+    function degToRad(degrees) {
+        return degrees * Math.PI / 180;
+    }
+
+
+    var teapotVertexPositionBuffer;
+    var teapotVertexNormalBuffer;
+    var teapotVertexFrontColorBuffer;
+    var teapotVertexBackColorBuffer;
+
+    function handleLoadedTeapot(teapotData) {
+        teapotVertexNormalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexNormalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexNormals), gl.STATIC_DRAW);
+        teapotVertexNormalBuffer.itemSize = 3;
+        teapotVertexNormalBuffer.numItems = teapotData.vertexNormals.length / 3;
+
+        teapotVertexFrontColorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexFrontColorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexFrontcolors), gl.STATIC_DRAW);
+        teapotVertexFrontColorBuffer.itemSize = 3;
+        teapotVertexFrontColorBuffer.numItems = teapotData.vertexFrontcolors.length / 3;
+
+        teapotVertexBackColorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexBackColorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexBackcolors), gl.STATIC_DRAW);
+        teapotVertexBackColorBuffer.itemSize = 3;
+        teapotVertexBackColorBuffer.numItems = teapotData.vertexBackcolors.length / 3;
+
+        teapotVertexPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexPositionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexPositions), gl.STATIC_DRAW);
+        teapotVertexPositionBuffer.itemSize = 3;
+        teapotVertexPositionBuffer.numItems = teapotData.vertexPositions.length / 3;
+    }
+
+
+    function loadTeapot() {
+        var request = new XMLHttpRequest();
+        request.open("GET", "Kangaroo.json");
+        request.onreadystatechange = function () {
+            if (request.readyState == 4) {
+                handleLoadedTeapot(JSON.parse(request.responseText));
+            }
+        }
+        request.send();
+    }
+
+
+    var teapotAngle = 180;
+
+
+    function drawScene() {
+        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        if (teapotVertexPositionBuffer == null || teapotVertexNormalBuffer == null || teapotVertexFrontColorBuffer == null || teapotVertexBackColorBuffer == null) {
+            return;
+        }
+
+        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+        mat4.identity(mvMatrix);
+
+        mat4.translate(mvMatrix, [0, 0, -20]);
+
+        mat4.rotate(mvMatrix, degToRad(teapotAngle), [0, 1, 0]);
+        mat4.scale(mvMatrix, [8, 8, 8]);
+        
+        gl.uniform1i(shaderProgram.samplerUniform, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexPositionBuffer);
+        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, teapotVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexFrontColorBuffer);
+        gl.vertexAttribPointer(shaderProgram.vertexFrontColorAttribute, teapotVertexFrontColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexNormalBuffer) ;
+        gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, teapotVertexNormalBuffer.
+            itemSize, gl.FLOAT, false, 0 , 0) ;
+
+        setMatrixUniforms();
+        gl.drawArrays(gl.TRIANGLES, 0, teapotVertexPositionBuffer.numItems);
+    }
+
+
+    var lastTime = 0;
+    function animate() {
+        var timeNow = new Date().getTime();
+        if (lastTime != 0) {
+            var elapsed = timeNow - lastTime;
+            teapotAngle += 0.03 * elapsed;
+        }
+        lastTime = timeNow;
+    }
+
+
+    function tick() {
+        requestAnimFrame(tick);
+        drawScene();
+        animate();
+    }
+
+
+    function webGLStart() {
+        var canvas = document.getElementById("ICG-canvas");
+        initGL(canvas);
+        initShaders();
+        loadTeapot();
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+
+        tick();
+    }
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();">
+  
+    <canvas id="ICG-canvas" style="border: none;" width="800" height="600"></canvas>
+    <br/>
+
+</body>
+
+</html>
