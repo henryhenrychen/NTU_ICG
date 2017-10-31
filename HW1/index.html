@@ -43,7 +43,7 @@
         float SpecularLightWeighting1 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
         float DiffuseLightWeighting1 = max(dot(N, LightDirection1), 0.0) ;
 
-        float SpecularLightWeighting2 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
+        float SpecularLightWeighting2 = pow(max(dot(reflectDirection2,eyeDirection),0.0), uMaterialShininess) ;
         float DiffuseLightWeighting2 = max(dot(N, LightDirection2), 0.0) ;
 
         vec3 LightWeight = uAmbientLight + SpecularLight * SpecularLightWeighting1 + DiffuseLight * DiffuseLightWeighting1 + SpecularLight * SpecularLightWeighting2 + DiffuseLight * DiffuseLightWeighting2;
@@ -61,6 +61,7 @@
 
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
+    uniform mat4 uxformMatrix ;
     //uniform mat4 uNMatrix ;
 
     varying vec4 fragcolor;
@@ -134,7 +135,7 @@
         float SpecularLightWeighting1 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
         float DiffuseLightWeighting1 = max(dot(N, LightDirection1), 0.0) ;
 
-        float SpecularLightWeighting2 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
+        float SpecularLightWeighting2 = pow(max(dot(reflectDirection2,eyeDirection),0.0), uMaterialShininess) ;
         float DiffuseLightWeighting2 = max(dot(N, LightDirection2), 0.0) ;
 
         vec3 LightWeight = uAmbientLight + SpecularLight * SpecularLightWeighting1 + DiffuseLight * DiffuseLightWeighting1 + SpecularLight * SpecularLightWeighting2 + DiffuseLight * DiffuseLightWeighting2;
@@ -184,7 +185,7 @@
         float SpecularLightWeighting1 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
         float DiffuseLightWeighting1 = max(dot(N, LightDirection1), 0.0) ;
 
-        float SpecularLightWeighting2 = pow(max(dot(reflectDirection1,eyeDirection),0.0), uMaterialShininess) ;
+        float SpecularLightWeighting2 = pow(max(dot(reflectDirection2,eyeDirection),0.0), uMaterialShininess) ;
         float DiffuseLightWeighting2 = max(dot(N, LightDirection2), 0.0) ;
 
         vec3 LightWeight = uAmbientLight + SpecularLight * SpecularLightWeighting1 + DiffuseLight * DiffuseLightWeighting1 + SpecularLight * SpecularLightWeighting2 + DiffuseLight * DiffuseLightWeighting2;
@@ -313,6 +314,7 @@
         shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
 
         shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix") ;
+        shaderProgram.xformMatrixUniform = gl.getUniformLocation(shaderProgram, "uxformMatrix")
         shaderPrograms.push(shaderProgram) ;
 
     }
@@ -440,7 +442,7 @@
         }else if(i == 1) {
             json_file = "Csie.json" ;
         }else {
-            json_file = "Fighter.json" ;
+            json_file = "kangaroo.json" ;
         }
         shaderProgram = shaderPrograms[i] ; 
         var request = new XMLHttpRequest();
@@ -456,7 +458,20 @@
 
     var teapotAngle = [180, 180, 180];
     var Coordinates = [[-5, 0, -20], [-15, 0, -20], [5, 0, -20]] ;
+    var x,y,z ;
+    var x1 = 4;
+    var y1 = 4;
+    var z1 = 4;
+    var x2 = 4 ;
+    var y2 = 4 ;
+    var z2 = 6 ;
+    var x3 = 10 ;
+    var y3 = 10 ;
+    var z3 = 10 ;
     var scales = [[4,4,4], [4,4,6], [10,10,10]] ;
+
+    var radian ; 
+
  
 
     function drawScene() {
@@ -468,6 +483,29 @@
         // }
         // for(var i= 0 ; i < 3 ; i++){
         //     shaderProgram = shaderPrograms[i] ;
+        x = parseFloat(document.getElementById("X").value) ;
+        y = parseFloat(document.getElementById("Y").value) ;
+        z = parseFloat(document.getElementById("Z").value) ; 
+        Coordinates[0][0] = parseFloat(document.getElementById("X_cor1").value) ;
+        Coordinates[0][1] = parseFloat(document.getElementById("Y_cor1").value) ;
+        Coordinates[0][2] = parseFloat(document.getElementById("Z_cor1").value) ;
+        Coordinates[1][0] = parseFloat(document.getElementById("X_cor2").value) ;
+        Coordinates[1][1] = parseFloat(document.getElementById("Y_cor2").value) ;
+        Coordinates[1][2] = parseFloat(document.getElementById("Z_cor2").value) ;
+        Coordinates[2][0] = parseFloat(document.getElementById("X_cor3").value) ;
+        Coordinates[2][1] = parseFloat(document.getElementById("Y_cor3").value) ;
+        Coordinates[2][2] = parseFloat(document.getElementById("Z_cor3").value) ; 
+
+        radian = Math.PI * parseFloat(document.getElementById("X_s1").value) / 180.0;
+        var cot = Math.cos(radian) / Math.sin(radian) ;
+        var xformMatrix = new Float32Array([
+            1.0, cot,0.0,0.0,
+            0.0, 1.0, 0.0, 0.0, 
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0]) ;
+
+        gl.uniformMatrix4fv(shaderProgram.xformMatrixUniform, false, xformMatrix);
+
         i= 0 ;
         shaderProgram = shaderPrograms[i]
         gl.useProgram(shaderProgram) ;
@@ -478,7 +516,14 @@
         mat4.translate(mvMatrix, Coordinates[i]);
 
         mat4.rotate(mvMatrix, degToRad(teapotAngle[i]), [0, 1, 0]);
-        mat4.scale(mvMatrix,scales[i]);
+        if (document.getElementById("shading").value == "Flat") {
+            // mat4.scale(mvMatrix,[x, y, z]);
+            x1 = x ;
+            y1= y ;
+            z1 = z ;
+        }
+        mat4.scale(mvMatrix,[x1, y1, z1]);
+        mat4.multiply(mvMatrix, xformMatrix) ;
         
         gl.uniform1i(shaderProgram.samplerUniform, 0);
         //settings
@@ -523,7 +568,13 @@
         mat4.translate(mvMatrix, Coordinates[i]);
 
         mat4.rotate(mvMatrix, degToRad(teapotAngle[i]), [0, 1, 0]);
-        mat4.scale(mvMatrix,scales[i]);
+        if (document.getElementById("shading").value == "Gouraud") {
+            // mat4.scale(mvMatrix,[x, y, z]);
+            x2 = x ;
+            y2= y ;
+            z2 = z ;
+        }
+        mat4.scale(mvMatrix,[x2, y2, z2]);
         
         gl.uniform1i(shaderProgram.samplerUniform, 0);
         //settings
@@ -568,7 +619,13 @@
         mat4.translate(mvMatrix, Coordinates[i]);
 
         mat4.rotate(mvMatrix, degToRad(teapotAngle[i]), [0, 1, 0]);
-        mat4.scale(mvMatrix,scales[i]);
+        if (document.getElementById("shading").value == "Phong") {
+            // mat4.scale(mvMatrix,[x, y, z]);
+            x3 = x ;
+            y3= y ;
+            z3 = z ;
+        }
+        mat4.scale(mvMatrix,[x3, y3, z3]);
         
         gl.uniform1i(shaderProgram.samplerUniform, 0);
         //settings
@@ -656,38 +713,41 @@
     
     Shading:
     <select id="shading">
-        <option value="Flat">Flat Shading</option>
-        <option selected value="Phong"> Phong Shading</option>
-        <option value="Gouraud">Gouraud Shading</option>
+        <option selected value="Flat">0</option>
+        <option value="Phong"> 1</option>
+        <option value="Gouraud">2</option>
     </select>
     <table style="border: 0; padding: 10px;">
+        
         <tr>
-            <td><b>Material:</b>
-            <td><input type="text" id="shininess" value="10.0" />
+            <td><b>Scaling :</b>
+            <td>X: <input type="range" id="X" min="1.0" max="10.0" step="0.2" value="4.0" />
+            <td>Y: <input type="range" id="Y" min="1.0" max="10.0" step="0.2" value="4.0" />
+            <td>Z: <input type="range" id="Z" min="1.0" max="10.0" step="0.2" value="4.0" />
         </tr>
         <tr>
-            <td><b>Point Light Location:</b>
-            <td>X: <input type="text" id="lightPositionX" value="-10.0" />
-            <td>Y: <input type="text" id="lightPositionY" value="4.0" />
-            <td>Z: <input type="text" id="lightPositionZ" value="-20.0" />
+            <td><b>Shear :</b>
+            <td>Theta: <input type="range" id="X_s1" min="-180.0" max="180.0" step="10.0" value="0.0" />
+            <!-- <td>Y: <input type="range" id="Y_s1" min="-180.0" max="180.0" step="10.0" value="0.0" /> -->
+            <!-- <td>Z: <input type="range" id="Z_s1" min="-180.0" max="180.0" step="10.0" value="0.0" /> -->
         </tr>
         <tr>
-            <td><b>Specular Colour:</b>
-            <td>R: <input type="text" id="specularR" value="0.8" />
-            <td>G: <input type="text" id="specularG" value="0.8" />
-            <td>B: <input type="text" id="specularB" value="0.8" />
+            <td><b>Moving 0 :</b>
+            <td>X: <input type="range" id="X_cor1" min="-10.0" max="10.0" step="0.2" value="-5.0" />
+            <td>Y: <input type="range" id="Y_cor1" min="-10.0" max="10.0" step="0.2" value="0.0" />
+            <td>Z: <input type="range" id="Z_cor1" min="-40.0" max="-20.0" step="0.2" value="-20.0" />
         </tr>
         <tr>
-            <td><b>Diffuse Colour:</b>
-            <td>R: <input type="text" id="diffuseR" value="0.8" />
-            <td>G: <input type="text" id="diffuseG" value="0.8" />
-            <td>B: <input type="text" id="diffuseB" value="0.8" />
+            <td><b>Moving 1 :</b>
+            <td>X: <input type="range" id="X_cor2" min="-10.0" max="10.0" step="0.2" value="-15.0" />
+            <td>Y: <input type="range" id="Y_cor2" min="-10.0" max="10.0" step="0.2" value="0.0" />
+            <td>Z: <input type="range" id="Z_cor2" min="-40.0" max="-20.0" step="0.2" value="-20.0" />
         </tr>
         <tr>
-            <td><b>Ambient Light Colour:</b>
-            <td>R: <input type="text" id="ambientR" value="0.2" />
-            <td>G: <input type="text" id="ambientG" value="0.2" />
-            <td>B: <input type="text" id="ambientB" value="0.2" />
+            <td><b>Moving 2:</b>
+            <td>X: <input type="range" id="X_cor3" min="-10.0" max="10.0" step="0.2" value="5.0" />
+            <td>Y: <input type="range" id="Y_cor3" min="-10.0" max="10.0" step="0.2" value="0.0" />
+            <td>Z: <input type="range" id="Z_cor3" min="-40.0" max="-20.0" step="0.2" value="-20.0" />
         </tr>
     </table>
     <br/>
